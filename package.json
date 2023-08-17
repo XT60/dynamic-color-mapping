@@ -1,0 +1,26 @@
+{
+    "name": "dynamic-color-mapping",
+    "version": "1.0.0",
+    "description": "",
+    "main": "main.ts",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "main": "tsc src/main.ts && node src/main.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/XT60/dynamic-color-mapping.git"
+    },
+    "author": "Jakub Woś",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/XT60/dynamic-color-mapping/issues"
+    },
+    "homepage": "https://github.com/XT60/dynamic-color-mapping#readme",
+    "dependencies": {
+        "@types/node": "^20.5.0",
+        "canvas": "^2.11.2",
+        "fs": "^0.0.1-security",
+        "plotly": "^1.0.6"
+    }
+}
