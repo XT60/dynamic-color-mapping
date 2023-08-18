@@ -36,13 +36,6 @@ function toMask(position: Position): number {
     return position.x * 256 + position.y;
 }
 
-function toPosition(mask: number): Position {
-    return {
-        x: Math.floor(mask / 256),
-        y: mask % 256,
-    };
-}
-
 async function getColorMapData(
     mapImagePath: string,
     textureImagePath: string
@@ -110,7 +103,7 @@ async function createColorMap(
 ): Promise<void> {
     const colorMap = await getColorMapData(mapImagePath, textureImagePath);
     const canvas = getLUTCanvas(colorMap);
-    if (!canvas) return;
+    if (!canvas) throw Error("Canvas was undefined");
     saveCanvas(canvas, outputImagePath);
 }
 
