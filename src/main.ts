@@ -1,5 +1,6 @@
 import { createCanvas, loadImage, Canvas } from "canvas";
-import { fsync, writeFile, writeFileSync } from "fs";
+import { fsync, readdir, stat, statSync, writeFile, writeFileSync } from "fs";
+import { join } from "path";
 
 type Position = {
     x: number;
@@ -33,7 +34,7 @@ async function getRGBA(imagePath: string) {
 }
 
 function toMask(position: Position): number {
-    return position.x * 256 + position.y;
+    return position.y * 256 + position.x;
 }
 
 async function getColorMapData(
@@ -108,10 +109,23 @@ async function createColorMap(
 }
 
 // Specify input and output paths
-const mapImagePath = "img/map.png";
-const textureImagePath = "img/clothes.png";
-const outputImagePath = "img/LUT.png";
 
-createColorMap(mapImagePath, textureImagePath, outputImagePath)
-    .then(() => console.log("3D color map created successfully"))
-    .catch((error) => console.error("Error:", error));
+const clothesDir = "img/clothes";
+const lutDir = "img/lut";
+const uvMapPath = "img/map_template.png";
+
+readdir(clothesDir, (err, files) => {
+    if (err) {
+        console.error("Error reading directory:", err);
+        return;
+    }
+    for (const fileName of files) {
+        const inputClothesPath = join(clothesDir, fileName);
+        if (statSync(inputClothesPath).isFile()) {
+            const outputLutPath = join(lutDir, `lut_${fileName}`);
+            createColorMap(uvMapPath, inputClothesPath, outputLutPath)
+                .then(() => console.log("3D color map created successfully"))
+                .catch((error) => console.error("Error:", error));
+        }
+    }
+});

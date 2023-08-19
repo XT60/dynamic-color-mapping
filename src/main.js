@@ -38,6 +38,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var canvas_1 = require("canvas");
 var fs_1 = require("fs");
+var path_1 = require("path");
 var Color = /** @class */ (function () {
     function Color(r, g, b, a) {
         if (a === void 0) { a = 255; }
@@ -71,13 +72,7 @@ function getRGBA(imagePath) {
     });
 }
 function toMask(position) {
-    return position.x * 256 + position.y;
-}
-function toPosition(mask) {
-    return {
-        x: Math.floor(mask / 256),
-        y: mask % 256,
-    };
+    return position.y * 256 + position.x;
 }
 function getColorMapData(mapImagePath, textureImagePath) {
     return __awaiter(this, void 0, void 0, function () {
@@ -143,7 +138,7 @@ function createColorMap(mapImagePath, textureImagePath, outputImagePath) {
                     colorMap = _a.sent();
                     canvas = getLUTCanvas(colorMap);
                     if (!canvas)
-                        return [2 /*return*/];
+                        throw Error("Canvas was undefined");
                     saveCanvas(canvas, outputImagePath);
                     return [2 /*return*/];
             }
@@ -151,9 +146,22 @@ function createColorMap(mapImagePath, textureImagePath, outputImagePath) {
     });
 }
 // Specify input and output paths
-var mapImagePath = "img/map.png";
-var textureImagePath = "img/clothes.png";
-var outputImagePath = "img/LUT.png";
-createColorMap(mapImagePath, textureImagePath, outputImagePath)
-    .then(function () { return console.log("3D color map created successfully"); })
-    .catch(function (error) { return console.error("Error:", error); });
+var clothesDir = "img/clothes";
+var lutDir = "img/lut";
+var uvMapPath = "img/map_template.png";
+(0, fs_1.readdir)(clothesDir, function (err, files) {
+    if (err) {
+        console.error("Error reading directory:", err);
+        return;
+    }
+    for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
+        var fileName = files_1[_i];
+        var inputClothesPath = (0, path_1.join)(clothesDir, fileName);
+        if ((0, fs_1.statSync)(inputClothesPath).isFile()) {
+            var outputLutPath = (0, path_1.join)(lutDir, "lut_".concat(fileName));
+            createColorMap(uvMapPath, inputClothesPath, outputLutPath)
+                .then(function () { return console.log("3D color map created successfully"); })
+                .catch(function (error) { return console.error("Error:", error); });
+        }
+    }
+});
