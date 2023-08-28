@@ -5,7 +5,8 @@
     "main": "main.ts",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "main": "tsc src/main.ts && node src/main.js"
+        "generator": "tsc --outDir src/dist src/lutGenerator.ts && node src/dist/lutGenerator.js",
+        "converter": "tsc --outDir src/dist src/lutConverter.ts && node src/dist/lutConverter.js"
     },
     "repository": {
         "type": "git",
