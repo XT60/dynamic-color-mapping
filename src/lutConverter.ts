@@ -1,8 +1,9 @@
-/** Script for converting animation created with colors based on universal LUT (not necessarily RG color)
- * to sprites with only RG color colors that indicate their position on the LUT
- *
- * LUT      <-- Look Up Table
- * RG color <-- color that where we only care about the red and green RGBA values. This is because we associate red and green channels with certain position (x, y) on other image
+/* In short [thing is not tested]
+ * takes:
+ *  - actual LUT with our custom colors (not RG but also not the target colors)
+ *  - animation created with our custom colors (not RG but also not the target colors)
+ * returns:
+ *  - animation in RG colors where Red channels maps directly at X and Green at Y axis
  */
 
 import { createCanvas, loadImage, Canvas } from "canvas";
