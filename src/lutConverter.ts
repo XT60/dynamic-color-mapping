@@ -47,15 +47,15 @@ class Color {
     }
 }
 
-const canvas: Canvas = createCanvas(256, 256);
-const ctx = canvas.getContext("2d");
-
 /** Get color data of every pixel on the image */
 async function getRGBA(imagePath: string) {
     const sourceImage = await loadImage(imagePath);
     const imgWidth = sourceImage.width;
     const imgHeight = sourceImage.height;
-
+    
+    const canvas: Canvas = createCanvas(imgWidth, imgHeight);
+    const ctx = canvas.getContext("2d");    
+    
     ctx.drawImage(sourceImage, 0, 0);
     const imageData = ctx.getImageData(0, 0, imgWidth, imgHeight).data;
     return imageData;
@@ -70,13 +70,14 @@ async function getColorMapData(
     lutImagePath: string
 ): Promise<Map<string, Color>> {
     const lutImg = await getRGBA(lutImagePath);
+    const lutSize = await getImageSize(lutImagePath)
     const colorMap = new Map<string, Color>();
 
     for (let i = 0; i < lutImg.length; i += 4) {
         const flatPosition = Math.round(i / 4);
         const colorMapPosition = {
-            x: flatPosition % LUT_SIZE.width,
-            y: Math.floor(flatPosition / LUT_SIZE.width),
+            x: flatPosition % lutSize.width,
+            y: Math.floor(flatPosition / lutSize.width),
         };
 
         const targetColor = new Color(
@@ -88,7 +89,8 @@ async function getColorMapData(
 
         const rgColor = new Color(colorMapPosition.x, colorMapPosition.y);
 
-        colorMap.set(targetColor.toString(), rgColor);
+        if (!colorMap.get(targetColor.toString()))
+            colorMap.set(targetColor.toString(), rgColor);
     }
     return colorMap;
 }
@@ -142,10 +144,10 @@ async function convertAnimation(
         }
 
         // save the mapped color on the output canvas
-        outImgData[i] = outColorString.r;
-        outImgData[i + 1] = outColorString.g;
-        outImgData[i + 2] = outColorString.b;
-        outImgData[i + 3] = outColorString.a;
+        outImgData.data[i] = outColorString.r;
+        outImgData.data[i + 1] = outColorString.g;
+        outImgData.data[i + 2] = outColorString.b;
+        outImgData.data[i + 3] = outColorString.a;
     }
 
     // Put the modified image data onto the canvas
@@ -174,8 +176,8 @@ async function convertAnimation(
 //         }
 //     }
 // });
-const outputPath = "";
-const lutImagePath = "";
-const animationPath = "";
+const outputPath = "./convertedImage.png";
+const lutImagePath = "./img/maps/gradients/body.png";
+const animationPath = "./img/stabbing_animation/body.png";
 
 convertAnimation(lutImagePath, animationPath, outputPath);

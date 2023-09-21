@@ -6,7 +6,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "generator": "tsc --outDir src/dist src/lutGenerator.ts && node src/dist/lutGenerator.js",
-        "converter": "tsc --outDir src/dist src/lutConverter.ts && node src/dist/lutConverter.js"
+        "converter": "ts-node-dev ./src/lutConverter.ts "
     },
     "repository": {
         "type": "git",
@@ -22,6 +22,9 @@
         "@types/node": "^20.5.0",
         "canvas": "^2.11.2",
         "fs": "^0.0.1-security",
-        "plotly": "^1.0.6"
+        "plotly": "^1.0.6",
+        "ts-node": "^10.9.1",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^5.2.2"
     }
 }
