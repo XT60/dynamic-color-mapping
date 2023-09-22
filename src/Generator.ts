@@ -1,5 +1,6 @@
 import { createCanvas, loadImage, Canvas } from "canvas";
 import { fsync, readdir, stat, statSync, writeFile, writeFileSync } from "fs";
+import optimist from "optimist";
 import { join } from "path";
 
 type Position = {

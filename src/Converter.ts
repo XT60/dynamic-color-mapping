@@ -2,60 +2,36 @@
  * takes:
  *  - actual LUT with our custom colors (not RG but also not the target colors)
  *  - animation created with our custom colors (not RG but also not the target colors)
+ *
  * returns:
  *  - animation in RG colors where Red channels maps directly at X and Green at Y axis
+ *
+ * example usage:
+ * yarn run convert -i stabbing_animation
+ * this should create new directory in ./img/converted containing all necessary uvmaps for the animations provided all the input data is intact
  */
 
 import { createCanvas, loadImage, Canvas } from "canvas";
-import { writeFileSync } from "fs";
-
-const LUT_SIZE = {
-    width: 256,
-    height: 256,
-};
-
-class Color {
-    constructor(
-        public r: number,
-        public g: number,
-        public b: number = 0,
-        public a: number = 255
-    ) {}
-
-    getArr() {
-        return new Uint8ClampedArray([this.r, this.g, this.b, this.a]);
-    }
-
-    toString() {
-        return `rgba(${this.r}, ${this.g}, ${this.b}, ${this.a})`;
-    }
-
-    static fromString(colorString: string) {
-        const regex = /^rgba?\((\d{1,3}), (\d{1,3}), (\d{1,3}), (\d{1,3})\)$/;
-        const match = colorString.match(regex);
-
-        if (!match) {
-            throw new Error("Invalid color string format");
-        }
-
-        const r = parseInt(match[1]);
-        const g = parseInt(match[2]);
-        const b = parseInt(match[3]);
-        const a = parseInt(match[4]);
-
-        return new Color(r, g, b, a);
-    }
-}
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from "fs";
+import optimist from "optimist";
+import {
+    ANIMATION_DIR,
+    CONVERTER_OUTPUT as CONVERTER_OUTPUT_DIR,
+    GRADIENT_DIR,
+} from "./Config";
+import { join } from "path";
+import { enumFromStringValue, getBaseName, isPngFile } from "./Utils";
+import { AnimationPart, Color } from "./Types";
 
 /** Get color data of every pixel on the image */
 async function getRGBA(imagePath: string) {
     const sourceImage = await loadImage(imagePath);
     const imgWidth = sourceImage.width;
     const imgHeight = sourceImage.height;
-    
+
     const canvas: Canvas = createCanvas(imgWidth, imgHeight);
-    const ctx = canvas.getContext("2d");    
-    
+    const ctx = canvas.getContext("2d");
+
     ctx.drawImage(sourceImage, 0, 0);
     const imageData = ctx.getImageData(0, 0, imgWidth, imgHeight).data;
     return imageData;
@@ -70,7 +46,7 @@ async function getColorMapData(
     lutImagePath: string
 ): Promise<Map<string, Color>> {
     const lutImg = await getRGBA(lutImagePath);
-    const lutSize = await getImageSize(lutImagePath)
+    const lutSize = await getImageSize(lutImagePath);
     const colorMap = new Map<string, Color>();
 
     for (let i = 0; i < lutImg.length; i += 4) {
@@ -155,29 +131,50 @@ async function convertAnimation(
     saveCanvas(outCanvas, outputPath);
 }
 
-// // Specify input and output paths
+/** Find converter output directory based on the input animation directory path*/
+function getOutputDir(animationDirectoryPath: string) {
+    const index = animationDirectoryPath.indexOf(ANIMATION_DIR);
+    if (index === -1)
+        throw new Error(
+            "Animation is not based in animation directory specified in config!"
+        );
+    const relativePath = animationDirectoryPath.substring(
+        index + ANIMATION_DIR.length
+    );
+    return join(CONVERTER_OUTPUT_DIR, relativePath);
+}
 
-// const clothesDir = "img/clothes";
-// const lutDir = "img/lut";
-// const uvMapPath = "img/map_template.png";
+/** Main script function, converts animations under specified path to UV-maps, the output is placed in img/converted directory */
+function convertAnimations(animationDirectoryPath: string) {
+    const outputDir = getOutputDir(animationDirectoryPath);
+    mkdirSync(outputDir);
 
-// readdir(clothesDir, (err, files) => {
-//     if (err) {
-//         console.error("Error reading directory:", err);
-//         return;
-//     }
-//     for (const fileName of files) {
-//         const inputClothesPath = join(clothesDir, fileName);
-//         if (statSync(inputClothesPath).isFile()) {
-//             const outputLutPath = join(lutDir, `lut_${fileName}`);
-//             createColorMap(uvMapPath, inputClothesPath, outputLutPath)
-//                 .then(() => console.log("3D color map created successfully"))
-//                 .catch((error) => console.error("Error:", error));
-//         }
-//     }
-// });
-const outputPath = "./convertedImage.png";
-const lutImagePath = "./img/maps/gradients/body.png";
-const animationPath = "./img/stabbing_animation/body.png";
+    const fileNames = readdirSync(animationDirectoryPath);
+    for (const fileName of fileNames) {
+        const baseName = getBaseName(fileName);
+        const animationPart = enumFromStringValue(AnimationPart, baseName);
+        if (!isPngFile(fileName) || !animationPart) {
+            throw new Error(
+                `${fileName} is not of .png extension or it doesn't fit any animation part template!`
+            );
+        }
+        const gradientPath = join(GRADIENT_DIR, fileName); // filename should be the same, we already checked if its valid animation part and has png extension
+        const animationPath = join(animationDirectoryPath, fileName);
+        const outputPath = join(outputDir, fileName);
+        convertAnimation(gradientPath, animationPath, outputPath);
+    }
+}
 
-convertAnimation(lutImagePath, animationPath, outputPath);
+/** Entry to the script, validates command line arguments and runs the main script function  */
+function handleConverterCommand() {
+    const { argv } = optimist;
+    const animationDir = join(ANIMATION_DIR, argv.i);
+    const validArgs = typeof argv.i === "string" && existsSync(animationDir);
+    if (!validArgs) {
+        throw new Error(`ERROR : File not found!
+    -i = name of the directory in ./img/animations/ where are located animations created based on map templates `);
+    }
+    convertAnimations(animationDir);
+}
+
+handleConverterCommand();
