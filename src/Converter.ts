@@ -147,7 +147,7 @@ function getOutputDir(animationDirectoryPath: string) {
 /** Main script function, converts animations under specified path to UV-maps, the output is placed in img/converted directory */
 function convertAnimations(animationDirectoryPath: string) {
     const outputDir = getOutputDir(animationDirectoryPath);
-    mkdirSync(outputDir);
+    if (!existsSync(outputDir)) mkdirSync(outputDir);
 
     const fileNames = readdirSync(animationDirectoryPath);
     for (const fileName of fileNames) {

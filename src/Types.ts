@@ -32,7 +32,7 @@ export class Color {
 }
 
 export enum AnimationPart {
-    Body = "body",
+    Color = "color",
     Cape = "cape",
     Hair = "hair",
 }
