@@ -12,7 +12,7 @@
  */
 
 import { createCanvas, loadImage, Canvas } from "canvas";
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readdir, readdirSync, writeFileSync } from "fs";
 import optimist from "optimist";
 import {
     ANIMATION_DIR,
@@ -168,13 +168,33 @@ function convertAnimations(animationDirectoryPath: string) {
 /** Entry to the script, validates command line arguments and runs the main script function  */
 function handleConverterCommand() {
     const { argv } = optimist;
-    const animationDir = join(ANIMATION_DIR, argv.i);
-    const validArgs = typeof argv.i === "string" && existsSync(animationDir);
-    if (!validArgs) {
-        throw new Error(`ERROR : File not found!
-    -i = name of the directory in ./img/animations/ where are located animations created based on map templates `);
+    if (argv.i === "all") {
+        readdir(ANIMATION_DIR, { withFileTypes: true }, (err, files) => {
+            if (err) {
+                console.error("Error reading directory:", err);
+                return;
+            }
+
+            const subdirectories = files
+                .filter((dirent) => dirent.isDirectory())
+                .map((dirent) => dirent.name);
+
+            for (const subdirectory of subdirectories) {
+                const path = join(ANIMATION_DIR, subdirectory);
+                convertAnimations(path);
+            }
+        });
+    } else {
+        const animationDir = join(ANIMATION_DIR, argv.i);
+        const validArgs =
+            typeof argv.i === "string" && existsSync(animationDir);
+        if (!validArgs) {
+            throw new Error(`ERROR : File not found!
+        -i = name of the directory in ./img/animations/ where are located animations created based on map templates `);
+        }
+
+        convertAnimations(animationDir);
     }
-    convertAnimations(animationDir);
 }
 
 handleConverterCommand();
